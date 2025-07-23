@@ -183,6 +183,5 @@ with tab6:
             subject_counts = df['과목'].value_counts()
             st.bar_chart(subject_counts, use_container_width=True)
 
-                    st.warning(f"'{worst_subject}' 과목에서 오답이 많아요. 이 과목 복습을 집중하세요.")
     else:
         st.info("분석할 오답이 아직 충분하지 않아요.")
