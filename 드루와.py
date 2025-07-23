@@ -30,3 +30,4 @@ st.subheader("💬 채팅 기록")
 for chat in reversed(st.session_state.chat_history):
     st.markdown(f"**[{chat['timestamp']}] {chat['nickname']}**: {chat['message']}")
 
+
