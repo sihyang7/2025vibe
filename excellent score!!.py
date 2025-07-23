@@ -174,7 +174,7 @@ with tab6:
         all_reasons = sum(df['오답 원인'], [])
         reason_counts = pd.Series(all_reasons).value_counts()
         st.markdown("### 📌 오답 원인 분석")
-        st.bar_chart(reason_counts)
+        st.bar_chart(reason_counts, use_container_width=True)
 
         st.markdown("### 🧠 맞춤형 조언")
         if '개념 부족' in reason_counts and reason_counts['개념 부족'] >= 3:
@@ -187,10 +187,11 @@ with tab6:
         # 2. 과목별 오답 분석
         subject_counts = df['과목'].value_counts()
         st.markdown("### 📚 과목별 오답 빈도")
-        st.bar_chart(subject_counts)
+        st.bar_chart(subject_counts, use_container_width=True)
 
         if subject_counts.max() > 5:
             worst_subject = subject_counts.idxmax()
             st.warning(f"'{worst_subject}' 과목에서 오답이 많아요. 이 과목 복습을 집중하세요.")
     else:
         st.info("분석할 오답이 아직 충분하지 않아요.")
+
