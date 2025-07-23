@@ -1,4 +1,4 @@
-# 시험정복기 전체 앱
+# 시험정복기 전체 앱 (D-Day 강조 + 분석 조언 포함)
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -7,7 +7,7 @@ from collections import defaultdict
 st.set_page_config(page_title="시험정복기 📚", layout="wide")
 st.title("📚 시험정복기 - 개념/오답/디데이 앱")
 
-# 상태 초기화
+# -------------------- 세션 상태 초기화 --------------------
 if 'concepts' not in st.session_state:
     st.session_state.concepts = []
 if 'wrong_answers_by_subject' not in st.session_state:
@@ -15,7 +15,19 @@ if 'wrong_answers_by_subject' not in st.session_state:
 if 'ddays' not in st.session_state:
     st.session_state.ddays = []
 
-# 공부 팁
+# -------------------- 상단 중요 D-Day 강조 표시 --------------------
+important_ddays = [d for d in st.session_state.ddays if d.get("중요")]
+if important_ddays:
+    upcoming = sorted(important_ddays, key=lambda x: x["날짜"])[0]
+    delta = (upcoming["날짜"] - datetime.now().date()).days
+    if delta > 0:
+        st.markdown(f"### 🎯 중요한 일정: **{upcoming['이름']}** (D-{delta})")
+    elif delta == 0:
+        st.markdown(f"### 🚨 오늘은 **{upcoming['이름']}** 디데이!")
+    else:
+        st.markdown(f"### ✅ **{upcoming['이름']}** 디데이는 {-delta}일 전에 끝났어요")
+
+# -------------------- 공부 팁 --------------------
 study_tips = {
     "국어": "📖 비문학은 구조 파악, 문학은 자주 나오는 작품 암기!",
     "수학": "🧮 개념이해 + 유형 반복 + 실전 속도 연습!",
@@ -25,10 +37,10 @@ study_tips = {
     "기타": "✍️ 스스로 요약 노트 만들기 + 퀴즈 활용!",
 }
 
-# 탭 구성
+# -------------------- 탭 구성 --------------------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 분석 리포트"])
 
-# 1. 개념 노트
+# -------------------- 1. 개념 노트 --------------------
 with tab1:
     st.subheader("🧠 개념 정리")
     subject = st.text_input("과목")
@@ -53,7 +65,7 @@ with tab1:
             st.markdown(f"[🔗 링크]({c['링크']})")
         st.markdown("---")
 
-# 2. 오답 정리
+# -------------------- 2. 오답 정리 --------------------
 with tab2:
     st.subheader("❌ 오답 노트")
     subject2 = st.text_input("과목", key="sub2")
@@ -101,7 +113,7 @@ with tab2:
                         st.markdown(f"**관련 개념**: {wa['관련 개념']}")
                         st.markdown(f"📅 복습 예정일: {wa['복습 예정일']}")
 
-# 3. 복습 스케줄
+# -------------------- 3. 복습 스케줄 --------------------
 with tab3:
     st.subheader("🔁 복습할 오답 목록")
     today = datetime.now().date()
@@ -122,31 +134,15 @@ with tab3:
     else:
         st.success("오늘 복습할 항목이 없어요!")
 
-# 4. 디데이
+# -------------------- 4. D-Day (탭 내 관리) --------------------
 with tab4:
-    st.subheader("📅 디데이 등록")
-    dday_name = st.text_input("디데이 이름")
-    dday_date = st.date_input("날짜 선택")
-
-    if st.button("디데이 추가"):
-        st.session_state.ddays.append({
-            "이름": dday_name,
-            "날짜": dday_date
-        })
-        st.success("디데이가 등록되었습니다!")
-
-    st.subheader("📌 등록된 D-Day")
-    sorted_ddays = sorted(st.session_state.ddays, key=lambda x: x["날짜"])
-    for d in sorted_ddays:
+    st.subheader("📅 디데이 목록")
+    for d in sorted(st.session_state.ddays, key=lambda x: x["날짜"]):
         delta = (d["날짜"] - datetime.now().date()).days
-        if delta > 0:
-            st.markdown(f"🗓️ **{d['이름']}**: <span style='color:green;'>D-{delta}</span>일 남음", unsafe_allow_html=True)
-        elif delta == 0:
-            st.markdown(f"📣 **{d['이름']}**: <span style='color:red;'>오늘이 디데이!</span>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"✅ **{d['이름']}**: <span style='color:gray;'>{-delta}일 전 종료</span>", unsafe_allow_html=True)
+        prefix = "🌟 " if d.get("중요") else ""
+        st.markdown(f"{prefix}**{d['이름']}** - {'D-' + str(delta) if delta >= 0 else f'{-delta}일 전 종료'}")
 
-# 5. 공부 팁
+# -------------------- 5. 과목별 공부 팁 --------------------
 with tab5:
     st.subheader("💡 과목별 공부법 추천")
     selected_subject = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
@@ -156,7 +152,7 @@ with tab5:
 with tab6:
     st.subheader("📊 맞춤 분석 리포트")
     subject_stats = {s: sum(len(entries) for entries in by_date.values()) for s, by_date in st.session_state.wrong_answers_by_subject.items()}
-    
+
     if subject_stats:
         col1, col2 = st.columns(2)
 
@@ -177,5 +173,44 @@ with tab6:
                 st.bar_chart(pd.DataFrame(tag_counts.values(), index=tag_counts.keys(), columns=["건수"]), use_container_width=True)
             else:
                 st.info("오답 원인 데이터가 아직 없습니다.")
+
+        # 맞춤 조언 출력
+        st.subheader("🧠 맞춤 학습 조언")
+        if subject_stats:
+            most_wrong_subject = max(subject_stats, key=subject_stats.get)
+            st.markdown(f"✅ **[{most_wrong_subject}]** 과목에서 오답이 가장 많아요. 이 과목은 개념 복습과 실전 연습을 병행하세요!")
+
+        if tag_counts:
+            top_tag = max(tag_counts, key=tag_counts.get)
+            advice_map = {
+                "개념 부족": "📘 개념 요약 노트를 만들어보세요. 중요한 포인트를 시각화해보는 것도 좋아요.",
+                "계산 실수": "🧮 꼼꼼한 풀이 연습과 검산 습관이 중요해요.",
+                "시간 부족": "⏱️ 타이머를 두고 푸는 연습을 통해 시간 감각을 길러보세요.",
+                "문제 해석 오류": "🔍 문제의 핵심 문장을 체크하는 연습을 해보세요.",
+                "기타": "💡 틀린 원인을 스스로 분석하고 패턴을 찾아보세요!"
+            }
+            st.markdown(f"⚠️ 가장 자주 틀린 이유: **{top_tag}**")
+            st.info(advice_map.get(top_tag, "더 자세한 분석이 필요해요!"))
     else:
-        st.info("아직 저장된 오답 데이터가 없습니다.")
+        st.info("분석할 데이터가 아직 없습니다.")
+
+# -------------------- Sidebar: D-Day 등록 --------------------
+with st.sidebar:
+    st.header("📅 D-Day 설정")
+    dday_name = st.text_input("디데이 이름")
+    dday_date = st.date_input("날짜 선택", key="dday_date_sidebar")
+    important = st.checkbox("🌟 중요 D-Day로 표시")
+
+    if st.button("디데이 추가 (사이드바)", key="add_dday_sidebar"):
+        st.session_state.ddays.append({
+            "이름": dday_name,
+            "날짜": dday_date,
+            "중요": important
+        })
+        st.success("디데이가 등록되었습니다!")
+
+    st.markdown("### 📌 등록된 D-Day")
+    for d in sorted(st.session_state.ddays, key=lambda x: x["날짜"]):
+        delta = (d["날짜"] - datetime.now().date()).days
+        prefix = "🌟 " if d.get("중요") else ""
+        st.write(f"{prefix}{d['이름']} - {'D-' + str(delta) if delta >= 0 else f'{-delta}일 전 종료'}")
