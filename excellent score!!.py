@@ -45,12 +45,15 @@ with tab1:
         })
         st.success("저장되었습니다!")
 
-    for c in st.session_state.concepts:
-        st.markdown(f"**[{c['과목']}] {c['제목']}** ({c['날짜']})")
-        st.markdown(c["내용"])
-        if c["링크"]:
-            st.markdown(f"[🔗 링크]({c['링크']})")
-        st.markdown("---")
+    subjects = sorted(set(c['과목'] for c in st.session_state.concepts))
+    for subj in subjects:
+        st.markdown(f"### 📘 {subj}")
+        for c in [c for c in st.session_state.concepts if c['과목'] == subj]:
+            st.markdown(f"**{c['제목']}** ({c['날짜']})")
+            st.markdown(c["내용"])
+            if c["링크"]:
+                st.markdown(f"[🔗 링크]({c['링크']})")
+            st.markdown("---")
 
 # -------------------- 오답 정리 --------------------
 with tab2:
@@ -68,10 +71,11 @@ with tab2:
         my_answer = st.text_area("내가 쓴 답")
         why_that_answer = st.text_area("왜 그렇게 생각했나요?")
         correct = st.text_input("정답")
+        related_concept = st.text_area("관련 개념 정리")
 
         reason_multi = st.multiselect(
             "오답 원인 선택 (복수 선택 가능)",
-            ["개념 부족", "계산 실수", "문제 이해 오류", "시간 부족", "실수", "기타"]
+            ["개념 부족", "계산 실수", "문제 이해 오류", "시간 부족", "기타"]
         )
 
         submitted = st.form_submit_button("오답 저장")
@@ -83,6 +87,7 @@ with tab2:
                 "내 답": my_answer,
                 "왜 그렇게 썼는가": why_that_answer,
                 "정답": correct,
+                "관련 개념": related_concept,
                 "오답 원인": reason_multi,
                 "날짜": date_wrong,
                 "복습 예정일": date_wrong + timedelta(days=3),
@@ -94,17 +99,26 @@ with tab2:
 
     st.markdown("### 📄 오답 목록")
     if st.session_state.wrong_answers:
-        for entry in reversed(st.session_state.wrong_answers):
-            st.markdown(f"#### ❌ {entry['과목']} - {entry['날짜']}")
-            if entry["이미지"]:
-                st.image(entry["이미지"], caption=entry["이미지 이름"], width=400)
-            st.markdown(f"**문제 설명:** {entry['문제 설명']}")
-            st.markdown(f"**내가 쓴 답:** {entry['내 답']}")
-            st.markdown(f"**왜 그렇게 썼나:** {entry['왜 그렇게 썼는가']}")
-            st.markdown(f"**정답:** {entry['정답']}")
-            st.markdown(f"**오답 원인:** {', '.join(entry['오답 원인'])}")
-            st.markdown(f"📅 복습 예정일: {entry['복습 예정일']}")
-            st.markdown("---")
+        grouped = {}
+        for e in st.session_state.wrong_answers:
+            key = (e['과목'], e['날짜'])
+            if key not in grouped:
+                grouped[key] = []
+            grouped[key].append(e)
+
+        for (subject, date), entries in sorted(grouped.items(), key=lambda x: (x[0][0], x[0][1]), reverse=True):
+            st.markdown(f"## 📘 {subject} - {date}")
+            for entry in entries:
+                if entry["이미지"]:
+                    st.image(entry["이미지"], caption=entry["이미지 이름"], width=400)
+                st.markdown(f"**문제 설명:** {entry['문제 설명']}")
+                st.markdown(f"**내가 쓴 답:** {entry['내 답']}")
+                st.markdown(f"**왜 그렇게 썼나:** {entry['왜 그렇게 썼는가']}")
+                st.markdown(f"**정답:** {entry['정답']}")
+                st.markdown(f"**관련 개념:** {entry['관련 개념']}")
+                st.markdown(f"**오답 원인:** {', '.join(entry['오답 원인'])}")
+                st.markdown(f"📅 복습 예정일: {entry['복습 예정일']}")
+                st.markdown("---")
     else:
         st.info("아직 오답이 없습니다.")
 
@@ -148,4 +162,3 @@ with tab5:
     st.subheader("💡 과목별 공부 팁 추천")
     selected = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
     st.markdown(study_tips[selected])
-
