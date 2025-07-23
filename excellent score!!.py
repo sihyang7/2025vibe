@@ -23,8 +23,14 @@ study_tips = {
 }
 
 # -------------------- 탭 설정 --------------------
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 오답 분석"
+# 닉네임 설정
+if 'nickname' not in st.session_state:
+    st.session_state.nickname = st.text_input("닉네임을 설정하세요", value="익명")
+
+if 'comments' not in st.session_state:
+    st.session_state.comments = []
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 오답 분석", "💬 피드백 게시판"
 ])
 
 # -------------------- 개념 노트 --------------------
@@ -135,6 +141,20 @@ with tab3:
         st.info("오늘 복습할 오답은 없어요!")
 
 # -------------------- D-Day --------------------
+
+# D-Day 상단에 크게 표시
+if st.session_state.ddays:
+    nearest = min(st.session_state.ddays, key=lambda d: abs((d['날짜'] - datetime.now().date()).days))
+    days_left = (nearest['날짜'] - datetime.now().date()).days
+    if days_left > 0:
+        st.markdown(f"
+<div style='text-align: center; font-size: 36px; font-weight: bold;'>⏳ {nearest['이름']} - D-{days_left}일</div>", unsafe_allow_html=True)
+    elif days_left == 0:
+        st.markdown(f"
+<div style='text-align: center; font-size: 36px; font-weight: bold; color: red;'>📣 오늘은 {nearest['이름']}!</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"
+<div style='text-align: center; font-size: 28px;'>✅ {nearest['이름']}는 {-days_left}일 전에 지나갔어요</div>", unsafe_allow_html=True)
 with tab4:
     st.subheader("📅 D-Day 관리")
     dday_name = st.text_input("디데이 이름")
@@ -163,33 +183,20 @@ with tab5:
     selected = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
     st.markdown(study_tips[selected])
 
-# -------------------- 오답 분석 --------------------
-with tab6:
-    st.subheader("📊 오답 분석 및 맞춤형 조언")
+# -------------------- 피드백 게시판 --------------------
+with tab7:
+    st.subheader("💬 피드백 게시판")
+    new_comment = st.text_area("댓글을 남겨보세요 ✍️")
+    if st.button("댓글 등록") and new_comment:
+        st.session_state.comments.append({
+            "닉네임": st.session_state.nickname,
+            "내용": new_comment,
+            "시간": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
+        st.success("댓글이 등록되었습니다!")
 
-    if st.session_state.wrong_answers:
-        df = pd.DataFrame(st.session_state.wrong_answers)
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("### 📌 오답 원인 분석")
-            all_reasons = sum(df['오답 원인'], [])
-            reason_counts = pd.Series(all_reasons).value_counts()
-            st.bar_chart(reason_counts, use_container_width=True)
-
-        with col2:
-            st.markdown("### 📚 과목별 오답 빈도")
-            subject_counts = df['과목'].value_counts()
-            st.bar_chart(subject_counts, use_container_width=True)
-
-        st.markdown("### 🧠 맞춤형 조언")
-        if '개념 부족' in reason_counts and reason_counts['개념 부족'] >= 3:
-            st.warning("'개념 부족' 오답이 많아요. 개념 노트를 자주 복습하고, 단원별로 요약해보세요.")
-        if '계산 실수' in reason_counts and reason_counts['계산 실수'] >= 2:
-            st.info("계산 실수가 반복되네요. 실전 연습 시 계산 후 검산 습관을 들이세요.")
-        if '문제 이해 오류' in reason_counts:
-            st.info("문제 자체를 잘못 해석하는 경향이 있어요. 문제를 두 번 읽는 습관을 들이세요.")
-
-    else:
-        st.info("분석할 오답이 아직 충분하지 않아요.")
+    st.markdown("### 📋 전체 댓글")
+    for c in reversed(st.session_state.comments):
+        st.markdown(f"**{c['닉네임']}** ({c['시간']})")
+        st.markdown(f"{c['내용']}")
+        st.markdown("---")
