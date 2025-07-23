@@ -142,6 +142,23 @@ with tab3:
 
 # -------------------- D-Day --------------------
 
+# 중요 D-Day를 앱 상단 우측에 강조 표시 (사용자 설정 기준)
+important_dday = next((d for d in st.session_state.ddays if d.get('중요')), None)
+if important_dday:
+    delta = (important_dday['날짜'] - datetime.now().date()).days
+    box_color = "#ffe6e6" if delta <= 3 else "#f0f0f0"
+    st.sidebar.markdown(
+        f"""
+        <div style='padding: 20px; background-color: {box_color}; border-radius: 10px; border: 2px solid #ccc;'>
+            <h3 style='color: #d6336c;'>🎯 시험 디데이</h3>
+            <p style='font-size: 24px; font-weight: bold;'>
+                {important_dday['이름']}<br>D-{delta if delta >= 0 else 'DAY!'}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # D-Day 상단에 크게 표시
 if st.session_state.ddays:
     nearest = min(st.session_state.ddays, key=lambda d: abs((d['날짜'] - datetime.now().date()).days))
@@ -155,11 +172,16 @@ if st.session_state.ddays:
 
 with tab4:
     st.subheader("📅 D-Day 관리")
+    col1, col2 = st.columns([3, 1])
+with col1:
     dday_name = st.text_input("디데이 이름")
+with col2:
+    is_important = st.checkbox("중요 D-Day로 설정")
     dday_date = st.date_input("날짜 선택")
 
     if st.button("디데이 추가"):
-        st.session_state.ddays.append({
+    st.session_state.ddays.append({
+        "중요": is_important,
             "이름": dday_name,
             "날짜": dday_date
         })
