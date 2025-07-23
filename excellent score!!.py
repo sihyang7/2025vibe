@@ -237,23 +237,23 @@ with tab8:
 
     def percent_to_9grade(p):
     if p >= 96:
-        return "9등급"
+        return "1등급"
     elif p >= 89:
-        return "8등급"
+        return "2등급"
     elif p >= 77:
-        return "7등급"
+        return "3등급"
     elif p >= 60:
-        return "6등급"
+        return "4등급"
     elif p >= 40:
         return "5등급"
     elif p >= 23:
-        return "4등급"
+        return "6등급"
     elif p >= 11:
-        return "3등급"
+        return "7등급"
     elif p >= 4:
-        return "2등급"
+        return "8등급"
     else:
-        return "1등급".get(grade_5, "N/A")
+        return "9등급"
 
     if st.button("성적 저장"):
     st.session_state.scores.append({
