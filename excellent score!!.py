@@ -1,4 +1,3 @@
-# 시험정복기 전체 앱 (D-Day 강조 + 분석 조언 포함)
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
@@ -11,9 +10,11 @@ st.title("📚 시험정복기 - 개념/오답/디데이 앱")
 if 'concepts' not in st.session_state:
     st.session_state.concepts = []
 if 'wrong_answers_by_subject' not in st.session_state:
-    st.session_state.wrong_answers_by_subject = defaultdict(lambda: defaultdict(list))
+    st.session_state.wrong_answers_by_subject = {}
 if 'ddays' not in st.session_state:
     st.session_state.ddays = []
+if 'scores' not in st.session_state:
+    st.session_state.scores = []
 
 # -------------------- 상단 중요 D-Day 강조 표시 --------------------
 important_ddays = [d for d in st.session_state.ddays if d.get("중요")]
@@ -38,7 +39,9 @@ study_tips = {
 }
 
 # -------------------- 탭 구성 --------------------
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 분석 리포트"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+    ["🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 분석 리포트", "📈 성적 관리"]
+)
 
 # -------------------- 1. 개념 노트 --------------------
 with tab1:
@@ -70,7 +73,7 @@ with tab2:
     st.subheader("❌ 오답 노트")
     subject2 = st.text_input("과목", key="sub2")
     question = st.text_area("문제 내용")
-    image = st.file_uploader("문제 사진 업로드 (선택)", type=["png", "jpg", "jpeg"], key="img_upload")
+    image = st.file_uploader("문제 사진 업로드 (선택)", type=["png", "jpg", "jpeg"])
     my_answer = st.text_input("내가 쓴 답은?")
     why_that_answer = st.text_area("왜 그렇게 썼나요?")
     correct = st.text_input("정답")
@@ -92,7 +95,7 @@ with tab2:
             "복습 예정일": datetime.now().date() + timedelta(days=3)
         }
         today_str = datetime.now().strftime("%Y-%m-%d")
-        st.session_state.wrong_answers_by_subject[subject2][today_str].append(data)
+        st.session_state.wrong_answers_by_subject.setdefault(subject2, {}).setdefault(today_str, []).append(data)
         st.success("오답이 저장되었습니다!")
 
     st.subheader("📁 저장된 오답 보기")
@@ -134,7 +137,7 @@ with tab3:
     else:
         st.success("오늘 복습할 항목이 없어요!")
 
-# -------------------- 4. D-Day (탭 내 관리) --------------------
+# -------------------- 4. D-Day --------------------
 with tab4:
     st.subheader("📅 디데이 목록")
     for d in sorted(st.session_state.ddays, key=lambda x: x["날짜"]):
@@ -142,7 +145,7 @@ with tab4:
         prefix = "🌟 " if d.get("중요") else ""
         st.markdown(f"{prefix}**{d['이름']}** - {'D-' + str(delta) if delta >= 0 else f'{-delta}일 전 종료'}")
 
-# -------------------- 5. 과목별 공부 팁 --------------------
+# -------------------- 5. 공부 팁 --------------------
 with tab5:
     st.subheader("💡 과목별 공부법 추천")
     selected_subject = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
@@ -183,16 +186,44 @@ with tab6:
         if tag_counts:
             top_tag = max(tag_counts, key=tag_counts.get)
             advice_map = {
-                "개념 부족": "📘 개념 요약 노트를 만들어보세요. 중요한 포인트를 시각화해보는 것도 좋아요.",
-                "계산 실수": "🧮 꼼꼼한 풀이 연습과 검산 습관이 중요해요.",
-                "시간 부족": "⏱️ 타이머를 두고 푸는 연습을 통해 시간 감각을 길러보세요.",
-                "문제 해석 오류": "🔍 문제의 핵심 문장을 체크하는 연습을 해보세요.",
-                "기타": "💡 틀린 원인을 스스로 분석하고 패턴을 찾아보세요!"
+                "개념 부족": "📘 개념 요약 노트를 만들어보세요.",
+                "계산 실수": "🧮 검산 습관을 들이세요.",
+                "시간 부족": "⏱️ 타이머 훈련을 해보세요.",
+                "문제 해석 오류": "🔍 문장 해석 연습을 반복하세요.",
+                "기타": "💡 본인만의 오답 패턴을 분석해보세요!"
             }
-            st.markdown(f"⚠️ 가장 자주 틀린 이유: **{top_tag}**")
+            st.markdown(f"⚠️ 자주 틀린 원인: **{top_tag}**")
             st.info(advice_map.get(top_tag, "더 자세한 분석이 필요해요!"))
     else:
         st.info("분석할 데이터가 아직 없습니다.")
+
+# -------------------- 7. 성적 관리 --------------------
+with tab7:
+    st.subheader("📈 성적 관리 / 백분위 계산기")
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        score_subject = st.text_input("과목", key="score_subject")
+    with col2:
+        score = st.number_input("점수", min_value=0.0, max_value=100.0, step=0.1, key="score")
+    with col3:
+        rank = st.number_input("내 등수", min_value=1, step=1, key="rank")
+    with col4:
+        total_students = st.number_input("전교생 수", min_value=1, step=1, key="total_students")
+
+    if st.button("저장", key="save_score"):
+        percentile = round(100 * (1 - (rank - 1) / total_students), 2)
+        st.session_state.scores.append({
+            "과목": score_subject,
+            "점수": score,
+            "등수": rank,
+            "전체 인원": total_students,
+            "백분위": percentile
+        })
+        st.success(f"{score_subject} 성적 저장 완료! 백분위: {percentile}점")
+
+    if st.session_state.scores:
+        st.markdown("### 📊 저장된 성적")
+        st.dataframe(pd.DataFrame(st.session_state.scores))
 
 # -------------------- Sidebar: D-Day 등록 --------------------
 with st.sidebar:
