@@ -5,7 +5,7 @@ from datetime import datetime, date, time
 import random
 import pandas as pd
 
-# 데이터 파일 설정
+# ----------------------------- 기본 설정 -----------------------------
 DATA_FILE = "gatseng_grid_data.json"
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -17,7 +17,6 @@ with open(DATA_FILE, "r", encoding="utf-8") as f:
     except json.JSONDecodeError:
         records = []
 
-# 응원 멘트
 CHEER_MESSAGES = [
     "오늘도 살아있는 것만으로 대단해! ✨",
     "게으름은 잠깐, 갓생은 평생 🔥",
@@ -28,12 +27,10 @@ CHEER_MESSAGES = [
     "계획만 해도 절반은 성공한 거야! 🗓️",
 ]
 
-# 저장 함수
 def save_records():
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
 
-# 타임라인 계산
 def blocks_for_date(day_iso: str):
     blocks = ["⬜"] * 144
     for r in records:
@@ -50,12 +47,12 @@ def blocks_for_date(day_iso: str):
             continue
     return blocks
 
-# Streamlit 설정
+# ----------------------------- 페이지 설정 -----------------------------
 st.set_page_config(page_title="갓생 모눈 플래너", layout="wide")
 st.title("📘 갓생 모눈 플래너")
 st.markdown(f"### 💬 {random.choice(CHEER_MESSAGES)}")
 
-# --- 사이드바 ---
+# ----------------------------- 사이드바 -----------------------------
 with st.sidebar:
     st.header("🗓️ 기본 설정")
     record_date = st.date_input("날짜", value=date.today())
@@ -87,22 +84,18 @@ with st.sidebar:
         st.session_state.goal_list.append(goal_input)
 
     if st.session_state.goal_list:
-        goal_states = []
         for idx, g in enumerate(st.session_state.goal_list):
-            checked = st.checkbox(g, key=f"goal_chk_{idx}")
-            goal_states.append({"text": g, "done": checked})
-    else:
-        goal_states = []
-
+            st.text(f"🔹 {g}")
     if st.button("🗑️ 목표 초기화"):
         st.session_state.goal_list = []
         st.experimental_rerun()
 
-# --- 기록/타임라인 나란히 배치 ---
+# ----------------------------- 메인 화면 -----------------------------
 col1, col2 = st.columns([1, 1.2])
 
 with col1:
     st.subheader("📝 오늘 한 일 기록하기")
+
     with st.form("activity_form", clear_on_submit=True):
         activity = st.text_input("활동 내용", placeholder="예: 영어 단어 외우기")
         start_t = st.time_input("시작 시간", value=time(9, 0), step=300)
@@ -118,6 +111,15 @@ with col1:
             elif start_t >= end_t:
                 st.warning("시작 시간이 종료 시간보다 앞서야 해요.")
             else:
+                # 목표 체크 상태 저장
+                goal_check_list = []
+                if "goal_check_states" in st.session_state:
+                    for idx, g in enumerate(st.session_state.goal_list):
+                        goal_check_list.append({
+                            "text": g,
+                            "done": st.session_state.goal_check_states[idx]
+                        })
+
                 record = {
                     "date": record_date_iso,
                     "wake_time": wake_time.strftime("%H:%M"),
@@ -125,7 +127,7 @@ with col1:
                     "start": start_t.strftime("%H:%M"),
                     "end": end_t.strftime("%H:%M"),
                     "mood": mood,
-                    "goals": goal_states,
+                    "goals": goal_check_list,
                     "diary": diary,
                     "notes": notes,
                     "score": score,
@@ -135,6 +137,16 @@ with col1:
                 save_records()
                 st.success(f"'{activity}' 기록이 저장되었어요! ✅")
 
+    # 🎯 목표 체크 영역
+    if st.session_state.goal_list:
+        st.markdown("### ✅ 오늘의 목표 체크하기")
+        if "goal_check_states" not in st.session_state:
+            st.session_state.goal_check_states = [False] * len(st.session_state.goal_list)
+
+        for idx, g in enumerate(st.session_state.goal_list):
+            state = st.checkbox(g, key=f"check_goal_main_{idx}", value=st.session_state.goal_check_states[idx])
+            st.session_state.goal_check_states[idx] = state
+
 with col2:
     st.subheader(f"📊 {record_date_iso} 하루 타임라인 (10분 단위)")
     blocks = blocks_for_date(record_date_iso)
@@ -142,7 +154,7 @@ with col2:
         row = blocks[hour*6 : hour*6 + 6]
         st.markdown(f"`{hour:02d}:00`  {' '.join(row)}")
 
-# --- 최근 기록 ---
+# ----------------------------- 최근 기록 -----------------------------
 st.markdown("---")
 st.subheader("📋 최근 활동 기록")
 if records:
