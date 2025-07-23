@@ -235,32 +235,12 @@ with tab8:
     percent = round((1 - (my_rank - 1) / total_students) * 100, 2)
     st.markdown(f"👉 계산된 백분위: **{percent}%**")
 
-    def percent_to_9grade(p):
-    if p >= 96:
-        return "1등급"
-    elif p >= 89:
-        return "2등급"
-    elif p >= 77:
-        return "3등급"
-    elif p >= 60:
-        return "4등급"
-    elif p >= 40:
-        return "5등급"
-    elif p >= 23:
-        return "6등급"
-    elif p >= 11:
-        return "7등급"
-    elif p >= 4:
-        return "8등급"
-    else:
-        return "9등급"
-
+   
     if st.button("성적 저장"):
     st.session_state.scores.append({
         "과목": subject,
         "5등급": grade,
-        "9등급": percent_to_9grade(percent),
-        "퍼센트": percent,
+                "퍼센트": percent,
         "날짜": datetime.now().strftime("%Y-%m-%d")
     })
     st.success("성적이 저장되었습니다!")
@@ -269,10 +249,6 @@ with tab8:
     df_score = pd.DataFrame(st.session_state.scores)
     st.markdown("### 📋 저장된 성적")
     st.dataframe(df_score)
-
-    st.markdown("### 📊 9등급 분포 분석")
-    grade_counts = df_score["9등급"].value_counts().sort_index()
-    st.bar_chart(grade_counts)
 
     st.markdown("### 📈 평균 백분위")
     avg_percent = df_score["퍼센트"].mean()
