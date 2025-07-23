@@ -1,2 +1,2 @@
 import streamlit as st
-st.title('하마러브!!')
+st.title('가깡민썜의멘토링수업!')
