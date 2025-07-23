@@ -170,6 +170,22 @@ with tab6:
     if st.session_state.wrong_answers:
         df = pd.DataFrame(st.session_state.wrong_answers)
 
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("### 📌 오답 원인 분석")
+            all_reasons = sum(df['오답 원인'], [])
+            reason_counts = pd.Series(all_reasons).value_counts()
+            st.bar_chart(reason_counts, use_container_width=True)
+
+        with col2:
+            st.markdown("### 📚 과목별 오답 빈도")
+            subject_counts = df['과목'].value_counts()
+            st.bar_chart(subject_counts, use_container_width=True)
+
+        st.markdown("### 🧠 맞춤형 조언")
+        df = pd.DataFrame(st.session_state.wrong_answers)
+
         # 1. 오답 원인 분석
         all_reasons = sum(df['오답 원인'], [])
         reason_counts = pd.Series(all_reasons).value_counts()
@@ -194,4 +210,5 @@ with tab6:
             st.warning(f"'{worst_subject}' 과목에서 오답이 많아요. 이 과목 복습을 집중하세요.")
     else:
         st.info("분석할 오답이 아직 충분하지 않아요.")
+
 
