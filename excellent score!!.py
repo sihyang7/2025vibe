@@ -147,14 +147,12 @@ if st.session_state.ddays:
     nearest = min(st.session_state.ddays, key=lambda d: abs((d['날짜'] - datetime.now().date()).days))
     days_left = (nearest['날짜'] - datetime.now().date()).days
     if days_left > 0:
-        st.markdown(f"
-<div style='text-align: center; font-size: 36px; font-weight: bold;'>⏳ {nearest['이름']} - D-{days_left}일</div>", unsafe_allow_html=True)
+        st.markdown(f"""<div style='text-align: center; font-size: 36px; font-weight: bold;'>⏳ {nearest['이름']} - D-{days_left}일</div>""", unsafe_allow_html=True)
     elif days_left == 0:
-        st.markdown(f"
-<div style='text-align: center; font-size: 36px; font-weight: bold; color: red;'>📣 오늘은 {nearest['이름']}!</div>", unsafe_allow_html=True)
+        st.markdown(f"""<div style='text-align: center; font-size: 36px; font-weight: bold; color: red;'>📣 오늘은 {nearest['이름']}!</div>""", unsafe_allow_html=True)
     else:
-        st.markdown(f"
-<div style='text-align: center; font-size: 28px;'>✅ {nearest['이름']}는 {-days_left}일 전에 지나갔어요</div>", unsafe_allow_html=True)
+        st.markdown(f"""<div style='text-align: center; font-size: 28px;'>✅ {nearest['이름']}는 {-days_left}일 전에 지나갔어요</div>""", unsafe_allow_html=True)
+
 with tab4:
     st.subheader("📅 D-Day 관리")
     dday_name = st.text_input("디데이 이름")
