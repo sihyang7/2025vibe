@@ -230,31 +230,53 @@ with tab8:
 
     subject = st.selectbox("과목 선택", st.session_state.score_subjects)
     grade = st.selectbox("등급 (5등급제)", ["1", "2", "3", "4", "5"])
-    percent = st.slider("백분위 (퍼센트)", min_value=0, max_value=100, value=85)
+    total_students = st.number_input("전교생 수", min_value=1, value=100)
+    my_rank = st.number_input("전체 등수", min_value=1, value=1)
+    percent = round((1 - (my_rank - 1) / total_students) * 100, 2)
+    st.markdown(f"👉 계산된 백분위: **{percent}%**")
 
-    def convert_to_9(grade_5):
-        return {
-            "1": "1등급",
-            "2": "3등급",
-            "3": "5등급",
-            "4": "7등급",
-            "5": "9등급"
-        }.get(grade_5, "N/A")
+    def percent_to_9grade(p):
+    if p >= 96:
+        return "9등급"
+    elif p >= 89:
+        return "8등급"
+    elif p >= 77:
+        return "7등급"
+    elif p >= 60:
+        return "6등급"
+    elif p >= 40:
+        return "5등급"
+    elif p >= 23:
+        return "4등급"
+    elif p >= 11:
+        return "3등급"
+    elif p >= 4:
+        return "2등급"
+    else:
+        return "1등급".get(grade_5, "N/A")
 
     if st.button("성적 저장"):
-        st.session_state.scores.append({
-            "과목": subject,
-            "5등급": grade,
-            "9등급": convert_to_9(grade),
-            "퍼센트": percent,
-            "날짜": datetime.now().strftime("%Y-%m-%d")
-        })
-        st.success("성적이 저장되었습니다!")
+    st.session_state.scores.append({
+        "과목": subject,
+        "5등급": grade,
+        "9등급": percent_to_9grade(percent),
+        "퍼센트": percent,
+        "날짜": datetime.now().strftime("%Y-%m-%d")
+    })
+    st.success("성적이 저장되었습니다!")
 
     if st.session_state.scores:
-        df_score = pd.DataFrame(st.session_state.scores)
-        st.markdown("### 📋 저장된 성적")
-        st.dataframe(df_score)
+    df_score = pd.DataFrame(st.session_state.scores)
+    st.markdown("### 📋 저장된 성적")
+    st.dataframe(df_score)
+
+    st.markdown("### 📊 9등급 분포 분석")
+    grade_counts = df_score["9등급"].value_counts().sort_index()
+    st.bar_chart(grade_counts)
+
+    st.markdown("### 📈 평균 백분위")
+    avg_percent = df_score["퍼센트"].mean()
+    st.metric(label="전체 평균 백분위", value=f"{avg_percent:.2f}%")
 
 # -------------------- 피드백 게시판 --------------------
 st.sidebar.markdown("---")
