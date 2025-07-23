@@ -152,24 +152,30 @@ with tab5:
     selected_subject = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
     st.markdown(study_tips[selected_subject])
 
-# 6. 분석 리포트
+# -------------------- 6. 분석 리포트 --------------------
 with tab6:
     st.subheader("📊 맞춤 분석 리포트")
     subject_stats = {s: sum(len(entries) for entries in by_date.values()) for s, by_date in st.session_state.wrong_answers_by_subject.items()}
+    
     if subject_stats:
-        st.write("📌 과목별 오답 개수")
-        st.bar_chart(pd.DataFrame(subject_stats.values(), index=subject_stats.keys(), columns=["오답 수"]))
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("#### 🧾 과목별 오답 수")
+            st.bar_chart(pd.DataFrame(subject_stats.values(), index=subject_stats.keys(), columns=["오답 수"]), use_container_width=True)
+
+        tag_counts = defaultdict(int)
+        for by_date in st.session_state.wrong_answers_by_subject.values():
+            for entries in by_date.values():
+                for e in entries:
+                    for tag in e["태그"]:
+                        tag_counts[tag] += 1
+
+        with col2:
+            if tag_counts:
+                st.markdown("#### 🏷️ 오답 원인 통계")
+                st.bar_chart(pd.DataFrame(tag_counts.values(), index=tag_counts.keys(), columns=["건수"]), use_container_width=True)
+            else:
+                st.info("오답 원인 데이터가 아직 없습니다.")
     else:
         st.info("아직 저장된 오답 데이터가 없습니다.")
-    
-    tag_counts = defaultdict(int)
-    for by_date in st.session_state.wrong_answers_by_subject.values():
-        for entries in by_date.values():
-            for e in entries:
-                for tag in e["태그"]:
-                    tag_counts[tag] += 1
-    if tag_counts:
-        st.write("📌 오답 원인 통계")
-        st.bar_chart(pd.DataFrame(tag_counts.values(), index=tag_counts.keys(), columns=["건수"]))
-    else:
-        st.info("오답 원인 데이터가 아직 없습니다.")
