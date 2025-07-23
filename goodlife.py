@@ -60,15 +60,22 @@ if st.button("🗑️ 목표 초기화"):
     st.session_state.goal_list = []
 
 
-st.subheader("📘 오늘의 시간 계획 (10분 단위)")
+st.subheader("📘 오늘의 시간 계획 (모눈 느낌)")
+cols = st.columns(6)
+
 time_blocks = []
 start = datetime.combine(date.today(), time(5, 0))
 end = datetime.combine(date.today(), time(23, 50))
 current = start
+
 while current <= end:
-    time_blocks.append(current.strftime("%H:%M"))
+    time_str = current.strftime("%H:%M")
+    idx = (current - start).seconds // 600  # 10분 단위 인덱스
+    col = cols[idx % 6]  # 6열 반복
+    with col:
+        checked = st.checkbox(time_str, key=f"block_{time_str}")
+    time_blocks.append({"time": time_str, "done": checked})
     current += timedelta(minutes=10)
-selected_blocks = st.multiselect("계획한 시간대를 선택하세요", time_blocks)
 
 st.subheader("📝 오늘의 일지")
 diary = st.text_area("오늘 하루를 한 줄로 요약해보세요")
