@@ -183,5 +183,13 @@ with tab6:
             subject_counts = df['과목'].value_counts()
             st.bar_chart(subject_counts, use_container_width=True)
 
+        st.markdown("### 🧠 맞춤형 조언")
+        if '개념 부족' in reason_counts and reason_counts['개념 부족'] >= 3:
+            st.warning("'개념 부족' 오답이 많아요. 개념 노트를 자주 복습하고, 단원별로 요약해보세요.")
+        if '계산 실수' in reason_counts and reason_counts['계산 실수'] >= 2:
+            st.info("계산 실수가 반복되네요. 실전 연습 시 계산 후 검산 습관을 들이세요.")
+        if '문제 이해 오류' in reason_counts:
+            st.info("문제 자체를 잘못 해석하는 경향이 있어요. 문제를 두 번 읽는 습관을 들이세요.")
+
     else:
         st.info("분석할 오답이 아직 충분하지 않아요.")
