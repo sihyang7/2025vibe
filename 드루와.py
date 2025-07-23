@@ -1,9 +1,9 @@
 import streamlit as st
 from datetime import datetime
 
-st.set_page_config(page_title="vibe 1기 단톡방 💬", layout="centered")
+st.set_page_config(page_title="바이브코딩 1기 단톡방 💬", layout="centered")
 
-st.title("💬 vibe 1기 단체 톡방")
+st.title("💬 바이브코딩 1기 단톡방")
 
 # 닉네임 설정
 if 'nickname' not in st.session_state:
