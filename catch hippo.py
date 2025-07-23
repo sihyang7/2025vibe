@@ -3,18 +3,17 @@ import time
 import pandas as pd
 
 # ----------------------------
-# 기본 설정
+# 설정
 # ----------------------------
 RANKING_FILE = "ranking.csv"
 GAME_DURATION = 10  # 게임 시간 (초)
 
 st.set_page_config(page_title="하마 따라잡기", layout="centered")
-
-# ----------------------------
-# 제목 + 하마 애니메이션
-# ----------------------------
 st.title("🧗 하마 따라잡기 게임")
 
+# ----------------------------
+# 하마 도망 애니메이션
+# ----------------------------
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.image(
@@ -40,7 +39,18 @@ if "game_started" not in st.session_state:
     st.session_state.end_time = None
 
 # ----------------------------
-# 게임 시작 버튼
+# 착시 계단 생성 함수
+# ----------------------------
+def draw_stair_illusion(steps):
+    lines = []
+    for i in range(steps):
+        space = " " * (steps - i)
+        lines.append(f"{space}🟫")
+    lines.append(" 🧍‍♂️")  # 사람 캐릭터
+    return "\n".join(reversed(lines))
+
+# ----------------------------
+# 게임 시작
 # ----------------------------
 if nickname and not st.session_state.game_started:
     if st.button("🎮 게임 시작"):
@@ -51,7 +61,7 @@ if nickname and not st.session_state.game_started:
         st.success("게임 시작! 하마를 잡아라!")
 
 # ----------------------------
-# 게임 중 로직
+# 게임 진행 중
 # ----------------------------
 if st.session_state.game_started:
     now = time.time()
@@ -62,16 +72,18 @@ if st.session_state.game_started:
             if st.button("🐾 잡기!"):
                 st.session_state.steps += 1
 
-        # 위로 올라가는 사람 표시
-        st.markdown("### 당신의 위치")
-        st.text("\n" * (20 - st.session_state.steps) + "🧍‍♂️")
+        # 무한계단 착시 출력
+        st.markdown("### 당신의 위치 (무한계단 착시)")
+        st.text(draw_stair_illusion(st.session_state.steps))
 
-        # 남은 시간 안내
+        # 남은 시간
         remaining = int(st.session_state.end_time - now)
         st.info(f"⏳ 남은 시간: {remaining}초 | 📈 현재 높이: {st.session_state.steps}칸")
 
     else:
+        # ----------------------------
         # 게임 종료
+        # ----------------------------
         st.session_state.game_started = False
         total_time = round(now - st.session_state.start_time, 2)
         speed = round(st.session_state.steps / total_time, 2)
@@ -105,7 +117,7 @@ if st.session_state.game_started:
         st.dataframe(df.reset_index(drop=True).head(10))
 
 # ----------------------------
-# 닉네임 미입력 경고
+# 닉네임 미입력 시 경고
 # ----------------------------
 elif not nickname:
     st.warning("닉네임을 입력해주세요!")
