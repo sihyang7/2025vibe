@@ -32,8 +32,8 @@ else:
 
 if 'comments' not in st.session_state:
     st.session_state.comments = []
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-    "🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 오답 분석", "💬 피드백 게시판"
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    "🧠 개념 노트", "❌ 오답 정리", "🔁 복습 스케줄", "📅 D-Day", "💡 공부 팁", "📊 오답 분석", "💬 피드백 게시판", "📈 성적 기록"
 ])
 
 # -------------------- 개념 노트 --------------------
@@ -207,6 +207,55 @@ with tab5:
     selected = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
     st.markdown(study_tips[selected])
 
+# -------------------- 성적 기록 --------------------
+with tab8:
+    st.subheader("📈 나의 성적 기록")
+
+    if 'scores' not in st.session_state:
+        st.session_state.scores = []
+    if 'score_subjects' not in st.session_state:
+        st.session_state.score_subjects = ["국어", "영어", "수학", "사회", "과학", "역사"]
+
+    st.markdown("#### 과목 추가 / 삭제")
+    with st.form("subject_form", clear_on_submit=True):
+        new_subject = st.text_input("새 과목 추가")
+        remove_subject = st.selectbox("삭제할 과목 선택", [""] + st.session_state.score_subjects)
+        submitted_sub = st.form_submit_button("변경 적용")
+        if submitted_sub:
+            if new_subject and new_subject not in st.session_state.score_subjects:
+                st.session_state.score_subjects.append(new_subject)
+            if remove_subject and remove_subject in st.session_state.score_subjects:
+                st.session_state.score_subjects.remove(remove_subject)
+            st.success("과목 리스트가 업데이트되었습니다.")
+
+    subject = st.selectbox("과목 선택", st.session_state.score_subjects)
+    grade = st.selectbox("등급 (5등급제)", ["1", "2", "3", "4", "5"])
+    percent = st.slider("백분위 (퍼센트)", min_value=0, max_value=100, value=85)
+
+    def convert_to_9(grade_5):
+        return {
+            "1": "1등급",
+            "2": "3등급",
+            "3": "5등급",
+            "4": "7등급",
+            "5": "9등급"
+        }.get(grade_5, "N/A")
+
+    if st.button("성적 저장"):
+        st.session_state.scores.append({
+            "과목": subject,
+            "5등급": grade,
+            "9등급": convert_to_9(grade),
+            "퍼센트": percent,
+            "날짜": datetime.now().strftime("%Y-%m-%d")
+        })
+        st.success("성적이 저장되었습니다!")
+
+    if st.session_state.scores:
+        df_score = pd.DataFrame(st.session_state.scores)
+        st.markdown("### 📋 저장된 성적")
+        st.dataframe(df_score)
+
 # -------------------- 피드백 게시판 --------------------
 st.sidebar.markdown("---")
 st.sidebar.subheader("💬 피드백 게시판")
@@ -235,8 +284,11 @@ with tab7:
         st.success("댓글이 등록되었습니다!")
 
     st.markdown("### 📋 전체 댓글")
-    for c in reversed(st.session_state.comments):
+    for i, c in enumerate(reversed(st.session_state.comments)):
+        index = len(st.session_state.comments) - 1 - i
         st.markdown(f"**{c['닉네임']}** ({c['시간']})")
         st.markdown(f"{c['내용']}")
+        if st.button(f"🗑️ 삭제", key=f"delete_comment_{index}"):
+            st.session_state.comments.pop(index)
+            st.experimental_rerun()
         st.markdown("---")
-
