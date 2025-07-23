@@ -162,3 +162,34 @@ with tab5:
     st.subheader("💡 과목별 공부 팁 추천")
     selected = st.selectbox("과목을 선택하세요", list(study_tips.keys()))
     st.markdown(study_tips[selected])
+# -------------------- 맞춤 조언 탭 --------------------
+with st.expander(\"📊 오답 분석 및 맞춤 조언 보기\"):
+    if st.session_state.wrong_answers:
+        df = pd.DataFrame(st.session_state.wrong_answers)
+
+        # 1. 오답 원인 분석
+        all_reasons = sum(df['오답 원인'], [])  # 리스트 안의 리스트 합치기
+        reason_counts = pd.Series(all_reasons).value_counts()
+        st.markdown(\"### 📌 오답 원인 분석 결과\")        
+        st.bar_chart(reason_counts)
+
+        # 조언 출력
+        st.markdown(\"### 🧠 맞춤형 조언\")        
+        if '개념 부족' in reason_counts and reason_counts['개념 부족'] >= 3:
+            st.warning(\"'개념 부족' 오답이 많아요. 개념 노트를 자주 복습하고, 단원별로 요약해보세요.\")
+        if '계산 실수' in reason_counts and reason_counts['계산 실수'] >= 2:
+            st.info(\"계산 실수가 반복되네요. 실전 연습 시 계산 후 검산 습관을 들이세요.\")
+        if '문제 이해 오류' in reason_counts:
+            st.info(\"문제 자체를 잘못 해석하는 경향이 있어요. 문제를 천천히 두 번 읽는 습관을 들여보세요.\")
+
+        # 2. 과목별 오답 비율 분석
+        subject_counts = df['과목'].value_counts()
+        st.markdown(\"### 📚 과목별 오답 개수\")        
+        st.bar_chart(subject_counts)
+
+        if subject_counts.max() > 5:
+            worst_subject = subject_counts.idxmax()
+            st.warning(f\"'{worst_subject}' 과목에서 오답이 많이 나왔어요. 이 과목 복습을 집중하세요.\")
+
+    else:
+        st.info(\"아직 분석할 오답이 충분하지 않아요.\")
