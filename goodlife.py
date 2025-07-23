@@ -60,22 +60,31 @@ if st.button("🗑️ 목표 초기화"):
     st.session_state.goal_list = []
 
 
-st.subheader("📘 오늘의 시간 계획 (모눈 느낌)")
-cols = st.columns(6)
+if "timeline" not in st.session_state:
+    st.session_state.timeline = []
 
-time_blocks = []
-start = datetime.combine(date.today(), time(5, 0))
-end = datetime.combine(date.today(), time(23, 50))
-current = start
+with st.form("timeline_form", clear_on_submit=True):
+    st.markdown("## 📘 오늘 한 일 기록")
+    start_time = st.time_input("시작 시간", time(9, 0))
+    end_time = st.time_input("종료 시간", time(10, 0))
+    activity = st.text_input("활동 내용 (예: 영어 단어 외우기)")
+    submitted = st.form_submit_button("➕ 추가하기")
+    if submitted and activity and start_time < end_time:
+        duration = int((datetime.combine(date.today(), end_time) -
+                        datetime.combine(date.today(), start_time)).seconds / 600)  # 10분 단위
+        st.session_state.timeline.append({
+            "start": start_time.strftime("%H:%M"),
+            "end": end_time.strftime("%H:%M"),
+            "activity": activity,
+            "blocks": "🟩" * duration
+        })
 
-while current <= end:
-    time_str = current.strftime("%H:%M")
-    idx = (current - start).seconds // 600  # 10분 단위 인덱스
-    col = cols[idx % 6]  # 6열 반복
-    with col:
-        checked = st.checkbox(time_str, key=f"block_{time_str}")
-    time_blocks.append({"time": time_str, "done": checked})
-    current += timedelta(minutes=10)
+# 타임라인 출력
+if st.session_state.timeline:
+    st.markdown("## 📊 오늘의 활동 타임라인")
+    for item in st.session_state.timeline:
+        st.write(f"🕒 `{item['start']} ~ {item['end']}` | {item['activity']} | {item['blocks']}")
+
 
 st.subheader("📝 오늘의 일지")
 diary = st.text_area("오늘 하루를 한 줄로 요약해보세요")
