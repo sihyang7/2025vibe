@@ -43,17 +43,22 @@ st.subheader("⏰ 오늘의 기상 시간")
 wake_time = st.time_input("몇 시에 일어났나요?", time(7, 0))
 
 st.subheader("🎯 오늘의 목표")
-goals = []
-goal_input = st.text_input("✏️ 목표를 입력하고 Enter를 누르세요")
+
 if "goal_list" not in st.session_state:
     st.session_state.goal_list = []
-if goal_input:
+
+goal_input = st.text_input("✏️ 목표를 입력하세요")
+if st.button("➕ 목표 추가") and goal_input:
     st.session_state.goal_list.append(goal_input)
-    st.experimental_rerun()
-for idx, g in enumerate(st.session_state.goal_list):
-    st.checkbox(g, key=f"goal_{idx}")
-if st.button("목표 초기화"):
+    # 입력칸 초기화는 streamlit이 기본 제공
+
+if st.session_state.goal_list:
+    for idx, g in enumerate(st.session_state.goal_list):
+        st.checkbox(g, key=f"goal_{idx}")
+
+if st.button("🗑️ 목표 초기화"):
     st.session_state.goal_list = []
+
 
 st.subheader("📘 오늘의 시간 계획 (10분 단위)")
 time_blocks = []
