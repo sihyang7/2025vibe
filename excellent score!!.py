@@ -24,8 +24,11 @@ study_tips = {
 
 # -------------------- 탭 설정 --------------------
 # 닉네임 설정
+st.sidebar.subheader("👤 닉네임 설정")
 if 'nickname' not in st.session_state:
-    st.session_state.nickname = st.text_input("닉네임을 설정하세요", value="익명")
+    st.session_state.nickname = st.sidebar.text_input("닉네임을 입력하세요", value="익명")
+else:
+    st.session_state.nickname = st.sidebar.text_input("닉네임을 입력하세요", value=st.session_state.nickname)
 
 if 'comments' not in st.session_state:
     st.session_state.comments = []
@@ -205,7 +208,22 @@ with tab5:
     st.markdown(study_tips[selected])
 
 # -------------------- 피드백 게시판 --------------------
+st.sidebar.markdown("---")
+st.sidebar.subheader("💬 피드백 게시판")
+new_comment = st.sidebar.text_area("댓글을 남겨보세요 ✍️")
+if st.sidebar.button("댓글 등록") and new_comment:
+    st.session_state.comments.append({
+        "닉네임": st.session_state.nickname,
+        "내용": new_comment,
+        "시간": datetime.now().strftime("%Y-%m-%d %H:%M")
+    })
+    st.sidebar.success("댓글이 등록되었습니다!")
 with tab7:
+    st.subheader("💬 전체 피드백")
+    for c in reversed(st.session_state.comments):
+        st.markdown(f"**{c['닉네임']}** ({c['시간']})")
+        st.markdown(f"{c['내용']}")
+        st.markdown("---")
     st.subheader("💬 피드백 게시판")
     new_comment = st.text_area("댓글을 남겨보세요 ✍️")
     if st.button("댓글 등록") and new_comment:
@@ -221,3 +239,4 @@ with tab7:
         st.markdown(f"**{c['닉네임']}** ({c['시간']})")
         st.markdown(f"{c['내용']}")
         st.markdown("---")
+
