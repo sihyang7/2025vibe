@@ -5,7 +5,7 @@ from datetime import datetime, date, time
 import random
 import pandas as pd
 
-# 기본 데이터 파일
+# 데이터 파일 설정
 DATA_FILE = "gatseng_grid_data.json"
 if not os.path.exists(DATA_FILE):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -33,7 +33,7 @@ def save_records():
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(records, f, ensure_ascii=False, indent=2)
 
-# 타임블록 계산
+# 타임라인 계산
 def blocks_for_date(day_iso: str):
     blocks = ["⬜"] * 144
     for r in records:
@@ -50,15 +50,14 @@ def blocks_for_date(day_iso: str):
             continue
     return blocks
 
-# 페이지 설정
+# Streamlit 설정
 st.set_page_config(page_title="갓생 모눈 플래너", layout="wide")
 st.title("📘 갓생 모눈 플래너")
 st.markdown(f"### 💬 {random.choice(CHEER_MESSAGES)}")
 
-# 사이드바 설정
+# --- 사이드바 ---
 with st.sidebar:
     st.header("🗓️ 기본 설정")
-
     record_date = st.date_input("날짜", value=date.today())
     record_date_iso = record_date.isoformat()
 
@@ -99,48 +98,51 @@ with st.sidebar:
         st.session_state.goal_list = []
         st.experimental_rerun()
 
-# 활동 기록 폼
-st.subheader("🕒 오늘 한 일 기록하기")
-with st.form("activity_form", clear_on_submit=True):
-    activity = st.text_input("활동 내용", placeholder="예: 영어 단어 외우기")
-    start_t = st.time_input("시작 시간", value=time(9, 0), step=300)
-    end_t   = st.time_input("종료 시간", value=time(10, 0), step=300)
-    diary   = st.text_area("오늘 한 줄 요약")
-    notes   = st.text_area("자유 메모")
-    score   = st.slider("오늘의 갓생 점수", 1, 5, 3)
-    submitted = st.form_submit_button("➕ 기록 추가")
+# --- 기록/타임라인 나란히 배치 ---
+col1, col2 = st.columns([1, 1.2])
 
-    if submitted:
-        if not activity:
-            st.warning("활동 내용을 입력해주세요.")
-        elif start_t >= end_t:
-            st.warning("시작 시간이 종료 시간보다 앞서야 해요.")
-        else:
-            record = {
-                "date": record_date_iso,
-                "wake_time": wake_time.strftime("%H:%M"),
-                "activity": activity,
-                "start": start_t.strftime("%H:%M"),
-                "end": end_t.strftime("%H:%M"),
-                "mood": mood,
-                "goals": goal_states,
-                "diary": diary,
-                "notes": notes,
-                "score": score,
-                "dday_list": st.session_state.dday_list
-            }
-            records.append(record)
-            save_records()
-            st.success(f"'{activity}' 기록이 저장되었어요! ✅")
+with col1:
+    st.subheader("📝 오늘 한 일 기록하기")
+    with st.form("activity_form", clear_on_submit=True):
+        activity = st.text_input("활동 내용", placeholder="예: 영어 단어 외우기")
+        start_t = st.time_input("시작 시간", value=time(9, 0), step=300)
+        end_t   = st.time_input("종료 시간", value=time(10, 0), step=300)
+        diary   = st.text_area("오늘 한 줄 요약")
+        notes   = st.text_area("자유 메모")
+        score   = st.slider("오늘의 갓생 점수", 1, 5, 3)
+        submitted = st.form_submit_button("➕ 기록 추가")
 
-# 모눈 타임라인
-st.subheader(f"📊 {record_date_iso} 하루 타임라인 (10분 단위)")
-blocks = blocks_for_date(record_date_iso)
-for hour in range(24):
-    row = blocks[hour*6 : hour*6 + 6]
-    st.markdown(f"`{hour:02d}:00`  {' '.join(row)}")
+        if submitted:
+            if not activity:
+                st.warning("활동 내용을 입력해주세요.")
+            elif start_t >= end_t:
+                st.warning("시작 시간이 종료 시간보다 앞서야 해요.")
+            else:
+                record = {
+                    "date": record_date_iso,
+                    "wake_time": wake_time.strftime("%H:%M"),
+                    "activity": activity,
+                    "start": start_t.strftime("%H:%M"),
+                    "end": end_t.strftime("%H:%M"),
+                    "mood": mood,
+                    "goals": goal_states,
+                    "diary": diary,
+                    "notes": notes,
+                    "score": score,
+                    "dday_list": st.session_state.dday_list
+                }
+                records.append(record)
+                save_records()
+                st.success(f"'{activity}' 기록이 저장되었어요! ✅")
 
-# 최근 기록
+with col2:
+    st.subheader(f"📊 {record_date_iso} 하루 타임라인 (10분 단위)")
+    blocks = blocks_for_date(record_date_iso)
+    for hour in range(24):
+        row = blocks[hour*6 : hour*6 + 6]
+        st.markdown(f"`{hour:02d}:00`  {' '.join(row)}")
+
+# --- 최근 기록 ---
 st.markdown("---")
 st.subheader("📋 최근 활동 기록")
 if records:
@@ -153,4 +155,4 @@ if records:
             f"✏️ {r['activity']} | {r['mood']} | {dday_summary}"
         )
 else:
-    st.info("기록이 아직 없어요. 활동을 추가해보세요!")
+    st.info("기록이 아직 없어요. 활동을 입력해보세요!")
